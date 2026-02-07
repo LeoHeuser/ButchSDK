@@ -16,20 +16,10 @@ let package = Package(
         )
     ],
     targets: [
-        .target(
-            name: "ButchSDK",
-            path: ".",
-            sources: [
-                "Components",
-                "Tokens",
-                "Styles",
-                "Utility"
-            ]
-        ),
+        .target(name: "ButchSDK"),
         .testTarget(
-            name: "ButchTests",
-            dependencies: ["ButchSDK"],
-            path: "Tests"
+            name: "ButchSDKTests",
+            dependencies: ["ButchSDK"]
         )
     ]
 )

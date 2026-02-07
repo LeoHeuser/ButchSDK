@@ -88,7 +88,9 @@ public struct StaticWebView: View {
                 pageTitle: $pageTitle
             )
             .navigationTitle(navigationTitle.map { Text($0) } ?? Text(pageTitle))
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
         } else {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
@@ -108,6 +110,8 @@ public struct StaticWebView: View {
 
 // MARK: - Web View Representable
 
+#if os(iOS)
+@MainActor
 private struct StaticWebViewRepresentable: UIViewRepresentable {
     let url: URL
     let useAppLanguage: Bool
@@ -115,32 +119,63 @@ private struct StaticWebViewRepresentable: UIViewRepresentable {
     let cachePolicy: URLRequest.CachePolicy
     @Binding var pageTitle: String
     @Environment(\.openURL) private var openURL
-    
+
     func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.defaultWebpagePreferences.allowsContentJavaScript = allowsJavaScript
-        
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        
-        var request = URLRequest(url: url, cachePolicy: cachePolicy)
-        let languages = useAppLanguage ? Bundle.main.preferredLocalizations : Locale.preferredLanguages
-        request.setValue(languages.joined(separator: ", "), forHTTPHeaderField: "Accept-Language")
-        
-        webView.addObserver(context.coordinator, forKeyPath: "title", options: .new, context: nil)
-        webView.load(request)
-        
-        return webView
+        configuredWebView(coordinator: context.coordinator)
     }
-    
+
     func updateUIView(_ webView: WKWebView, context: Context) {}
-    
+
     func makeCoordinator() -> NavigationHandler {
         NavigationHandler(allowedUrl: url, openURL: openURL, pageTitle: $pageTitle)
     }
-    
+
     static func dismantleUIView(_ webView: WKWebView, coordinator: NavigationHandler) {
         webView.removeObserver(coordinator, forKeyPath: "title")
+    }
+}
+#elseif os(macOS)
+@MainActor
+private struct StaticWebViewRepresentable: NSViewRepresentable {
+    let url: URL
+    let useAppLanguage: Bool
+    let allowsJavaScript: Bool
+    let cachePolicy: URLRequest.CachePolicy
+    @Binding var pageTitle: String
+    @Environment(\.openURL) private var openURL
+
+    func makeNSView(context: Context) -> WKWebView {
+        configuredWebView(coordinator: context.coordinator)
+    }
+
+    func updateNSView(_ webView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> NavigationHandler {
+        NavigationHandler(allowedUrl: url, openURL: openURL, pageTitle: $pageTitle)
+    }
+
+    static func dismantleNSView(_ webView: WKWebView, coordinator: NavigationHandler) {
+        webView.removeObserver(coordinator, forKeyPath: "title")
+    }
+}
+#endif
+
+private extension StaticWebViewRepresentable {
+    func configuredWebView(coordinator: NavigationHandler) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.defaultWebpagePreferences.allowsContentJavaScript = allowsJavaScript
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = coordinator
+
+        var request = URLRequest(url: url, cachePolicy: cachePolicy)
+        let languages = useAppLanguage ? Bundle.main.preferredLocalizations : Locale.preferredLanguages
+        request.setValue(languages.joined(separator: ", "), forHTTPHeaderField: "Accept-Language")
+
+        webView.addObserver(coordinator, forKeyPath: "title", options: .new, context: nil)
+        webView.load(request)
+
+        return webView
     }
 }
 
