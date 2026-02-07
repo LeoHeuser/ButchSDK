@@ -126,19 +126,36 @@ public extension EnvironmentValues {
 
 private struct ErrorSystemModifier: ViewModifier {
     @State private var service = ErrorSystemService()
-    
+    let table: String?
+
     private var isPresented: Binding<Bool> {
         Binding(
             get: { service.currentError != nil },
             set: { if !$0 { service.dismiss() } }
         )
     }
-    
+
+    private var titleText: Text {
+        let key = service.currentError?.title ?? "error.generic.title"
+        if let table {
+            return Text(key, tableName: table)
+        }
+        return Text(key)
+    }
+
+    private var messageText: Text {
+        let key = service.currentError?.message ?? "error.generic.message"
+        if let table {
+            return Text(key, tableName: table)
+        }
+        return Text(key)
+    }
+
     func body(content: Content) -> some View {
         content
             .environment(\.errorService, service)
             .alert(
-                Text(service.currentError?.title ?? "error.generic.title"),
+                titleText,
                 isPresented: isPresented
             ) {
                 if let recoverLabel = service.recoverActionLabel,
@@ -152,7 +169,7 @@ private struct ErrorSystemModifier: ViewModifier {
                     service.dismiss()
                 }
             } message: {
-                Text(service.currentError?.message ?? "error.generic.message")
+                messageText
             }
     }
 }
@@ -160,8 +177,8 @@ private struct ErrorSystemModifier: ViewModifier {
 // MARK: - View Extension
 
 public extension View {
-    func errorSystem() -> some View {
-        modifier(ErrorSystemModifier())
+    func errorSystem(table: String? = nil) -> some View {
+        modifier(ErrorSystemModifier(table: table))
     }
 }
 
