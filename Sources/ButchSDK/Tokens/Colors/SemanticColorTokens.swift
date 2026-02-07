@@ -7,6 +7,7 @@ import SwiftUI
 
 public extension Color {
     
+    // MARK: - Base Tokens
     static var textPrimary: Color {
         adaptiveColor(light: .blackAlpha100, dark: .whiteAlpha100)
     }
@@ -32,7 +33,6 @@ public extension Color {
     }
     
     // MARK: - Button Tokens
-    
     static var buttonForegroundPrimary: Color {
         adaptiveColor(light: .blackAlpha090, dark: .whiteAlpha090)
     }
@@ -42,7 +42,6 @@ public extension Color {
     }
     
     // MARK: - TextField Tokens
-    
     static var textFieldBorder: Color {
         adaptiveColor(light: .blackAlpha020, dark: .whiteAlpha020)
     }
