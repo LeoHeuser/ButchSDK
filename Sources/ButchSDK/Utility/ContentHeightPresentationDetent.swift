@@ -39,7 +39,7 @@ public extension View {
 public struct ContentHeightPresentationDetentModifier: ViewModifier {
     @State private var contentHeight: CGFloat = 100
     
-    private let standardPadding: CGFloat = 20
+    private let standardPadding: CGFloat = 32
     private let minimumHeight: CGFloat = 100
     
     public init() {}
@@ -57,4 +57,34 @@ public struct ContentHeightPresentationDetentModifier: ViewModifier {
             }
             .presentationDetents([.height(contentHeight)])
     }
+}
+
+#Preview("Short Content") {
+    @Previewable @State var isPresented = true
+    
+    Button("Show Sheet") { isPresented = true }
+        .sheet(isPresented: $isPresented) {
+            VStack(spacing: 12) {
+                Text("Sheet Title")
+                    .font(.headline)
+                Text("This sheet adjusts its height to fit the content.")
+            }
+            .useContentHeightPresentationDetent
+        }
+}
+
+#Preview("Long Content") {
+    @Previewable @State var isPresented = true
+    
+    Button("Show Sheet") { isPresented = true }
+        .sheet(isPresented: $isPresented) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Sheet Title")
+                    .font(.headline)
+                ForEach(1..<8) { index in
+                    Text("Item \(index)")
+                }
+            }
+            .useContentHeightPresentationDetent
+        }
 }
